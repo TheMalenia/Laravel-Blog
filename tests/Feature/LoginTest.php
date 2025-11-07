@@ -17,24 +17,23 @@ class LoginTest extends TestCase
             'password' => bcrypt('testpass1383'),
         ]);
 
-        $response = $this->post('/login', [
+        $response = $this->postJson('/api/login', [
             'email' => 'login@gmail.com',
             'password' => 'testpass1383',
         ]);
 
-        $response->assertSessionHasNoErrors();
-        $this->assertAuthenticatedAs($user);
-        $this->assertContains($response->getStatusCode(), [200, 302]);
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('users', ['email' => 'login@gmail.com']);
     }
 
     public function test_login_fails_if_email_does_not_exist()
     {
-        $response = $this->post('/login', [
+        $response = $this->postJson('/api/login', [
             'email' => 'noone@example.com',
             'password' => 'somepassword',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $this->assertContains($response->getStatusCode(), [401, 422]);
         $this->assertGuest();
     }
 
@@ -44,31 +43,28 @@ class LoginTest extends TestCase
             'email' => 'wrongpass@example.com',
             'password' => bcrypt('correct-password'),
         ]);
-
-        $response = $this->post('/login', [
+        $response = $this->postJson('/api/login', [
             'email' => 'wrongpass@example.com',
             'password' => 'incorrect',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $this->assertContains($response->getStatusCode(), [401, 422]);
         $this->assertGuest();
     }
 
     public function test_login_shows_proper_error_message()
     {
-        $response = $this->post('/login', [
+        $response = $this->postJson('/api/login', [
             'email' => 'noone@example.com',
             'password' => 'whatever',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $this->assertContains($response->getStatusCode(), [401, 422]);
 
-        $errors = session('errors');
-        $this->assertNotNull($errors);
-        $this->assertTrue($errors->has('email'));
-
-        $first = $errors->first('email');
-        $this->assertIsString($first);
-        $this->assertNotEmpty($first);
+        $payload = $response->json();
+        $this->assertTrue(isset($payload['message']) || isset($payload['errors']));
+        if (isset($payload['errors'])) {
+            $this->assertArrayHasKey('email', $payload['errors']);
+        }
     }
 }

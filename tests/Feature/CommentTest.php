@@ -16,22 +16,20 @@ class CommentTest extends TestCase
     {
         $user = User::factory()->create();
         $post = Post::factory()->create();
-
-        $this->actingAs($user)
-            ->post('/posts/'.$post->id.'/comments', [
+        $response = $this->actingAs($user, 'api')
+            ->postJson('/api/posts/'.$post->id.'/comments', [
                 'body' => 'Nice post',
-            ])
-            ->assertStatus(302);
+            ]);
 
+        $this->assertContains($response->getStatusCode(), [200, 201]);
         $this->assertDatabaseHas('comments', ['body' => 'Nice post', 'post_id' => $post->id]);
     }
 
     public function test_guest_cannot_create_comment()
     {
         $post = Post::factory()->create();
-
-        $this->post('/posts/'.$post->id.'/comments', [
+        $this->postJson('/api/posts/'.$post->id.'/comments', [
             'body' => 'I comment',
-        ])->assertRedirect('/login');
+        ])->assertStatus(401);
     }
 }

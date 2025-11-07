@@ -13,25 +13,24 @@ class PostTest extends TestCase
 
     public function test_guest_cannot_create_post()
     {
-        $response = $this->post('/posts', [
+        $response = $this->postJson('/api/posts', [
             'title' => 'Guest Post',
             'body' => 'Body',
         ]);
 
-        $response->assertRedirect('/login');
+        $response->assertStatus(401);
     }
 
     public function test_authenticated_user_can_create_post()
     {
         $user = User::factory()->create();
-
-        $this->actingAs($user)
-            ->post('/posts', [
+        $response = $this->actingAs($user, 'api')
+            ->postJson('/api/posts', [
                 'title' => 'My Post',
                 'body' => 'Post body here',
-            ])
-            ->assertStatus(302);
+            ]);
 
+        $this->assertContains($response->getStatusCode(), [200, 201]);
         $this->assertDatabaseHas('posts', ['title' => 'My Post']);
     }
 
@@ -39,14 +38,13 @@ class PostTest extends TestCase
     {
         $user = User::factory()->create();
         $post = Post::factory()->for($user)->create(['title' => 'Old']);
-
-        $this->actingAs($user)
-            ->put('/posts/'.$post->id, [
+        $response = $this->actingAs($user, 'api')
+            ->putJson('/api/posts/'.$post->id, [
                 'title' => 'Updated',
                 'body' => $post->body,
-            ])
-            ->assertStatus(302);
+            ]);
 
+        $this->assertContains($response->getStatusCode(), [200, 204]);
         $this->assertDatabaseHas('posts', ['title' => 'Updated']);
     }
 
@@ -54,11 +52,10 @@ class PostTest extends TestCase
     {
         $user = User::factory()->create();
         $post = Post::factory()->for($user)->create();
+        $response = $this->actingAs($user, 'api')
+            ->deleteJson('/api/posts/'.$post->id);
 
-        $this->actingAs($user)
-            ->delete('/posts/'.$post->id)
-            ->assertStatus(302);
-
+        $this->assertContains($response->getStatusCode(), [200, 204]);
         $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
 }
