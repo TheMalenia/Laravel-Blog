@@ -16,7 +16,7 @@ class LoginTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => $user['email'],
             'password' => 'password',
         ]);
@@ -28,7 +28,7 @@ class LoginTest extends TestCase
 
     public function test_login_with_invalid_data()
     {
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'invalid@email.com',
             'password' => 'password',
         ]);
@@ -45,7 +45,7 @@ class LoginTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => $user['email'],
             'password' => 'wrong-password',
         ]);
