@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -14,20 +13,11 @@ use App\Http\Resources\UserResource;
 
 class AuthController extends Controller
 {
-    public function me(Request $request): JsonResponse
-    {
-        return response()->json(new UserResource($request->user()));
-    }
-
     public function register(RegisterRequest $request): JsonResponse
     {
         $data = $request->validated();
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-        ]);
+        $user = User::create($data);
 
         $token = $user->createToken('api_token')->plainTextToken;
 
@@ -49,8 +39,6 @@ class AuthController extends Controller
             ]);
         }
 
-        $user->tokens()->delete();
-
         $token = $user->createToken('api_token')->plainTextToken;
 
         return response()->json([
@@ -60,10 +48,9 @@ class AuthController extends Controller
         ]);
     }
 
-
-    public function logout(Request $request): JsonResponse
+    public function logout(): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        auth()->user()->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logged out successfully',
