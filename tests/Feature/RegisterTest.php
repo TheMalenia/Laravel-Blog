@@ -12,7 +12,7 @@ class RegisterTest extends TestCase
 
     public function test_register_with_correct_data()
     {
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@email.com',
             'password' => 'password',
@@ -26,7 +26,7 @@ class RegisterTest extends TestCase
 
     public function test_registration_fails_with_invalid_email()
     {
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'not-an-email',
             'password' => 'password',
@@ -41,7 +41,7 @@ class RegisterTest extends TestCase
 
     public function test_registration_fails_with_invalid_match_password()
     {
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@email.com',
             'password' => 'password',
@@ -58,7 +58,7 @@ class RegisterTest extends TestCase
     {
         $user = User::factory()->create(['email' => 'test@email.com']);
 
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@email.com',
             'password' => 'password',
@@ -66,15 +66,14 @@ class RegisterTest extends TestCase
         ]);
 
         // $response->assertJson ...
-        // some apis prefer 409 for duplicates, we should check after implement
-        $response->assertStatus(409)
+        $response->assertStatus(422)
             ->assertJsonValidationErrors('email');
-        $this->assertEquals(1, User::where('email', 'test@gmail.com')->count());
+        $this->assertEquals(1, User::where('email', 'test@email.com')->count());
     }
 
     public function test_registration_fails_with_short_password()
     {
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@email.com',
             'password' => '123',
